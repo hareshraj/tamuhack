@@ -1,0 +1,25 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    width: 200px;
+  }
+  
+  h1 {
+    font-size: 18px;
+    text-align: center;
+  }
+  
+  #assignment-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  #assignment-list li {
+    padding: 5px;
+    margin: 5px 0;
+  }
+  
+  #points-section {
+    margin-top: 10px;
+  }
+  
