@@ -1,5 +1,5 @@
 chrome.runtime.onInstalled.addListener(() => {
-    console.log("Procrastination Buster installed!");
+    console.log("ProcrastiNator installed!");
   
     // Set up a recurring alarm to check Canvas deadlines
     chrome.alarms.create("checkCanvas", { periodInMinutes: 10 });
