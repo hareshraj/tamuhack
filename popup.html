@@ -4,16 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ProcrastiNator</title>
+  <link rel="stylesheet" href="styles.css"> <!-- Add this line to link styles.css -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"> <!-- Add this line to link Montserrat font -->
   <style>
-    body { font-family: Arial, sans-serif; padding: 1rem; }
+    body { font-family: 'Montserrat', sans-serif; padding: 1rem; } /* Update font-family */
     button { margin-top: 1rem; padding: 0.5rem 1rem; }
+    #open-calendar { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; }
+    #open-calendar img { width: 32px; height: 32px; }
   </style>
 </head>
 <body>
+  <button id="open-calendar">
+    <img src="./images/CanvasLogo.png" alt="Open Calendar">
+  </button>
   <h1>ProcrastiNator</h1>
   <p>Stay on top of your Canvas assignments!</p>
   <button id="fetch">Check Assignments</button>
-
+  <ul id="assignment-list"></ul> <!-- Add this line to create a container for the assignments -->
   <script src="popup.js"></script>
 </body>
 </html>
