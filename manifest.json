@@ -1,15 +1,23 @@
 {
     "manifest_version": 3,
     "name": "Procrastination Buster",
-    "description": "Never miss an assignment again! Get rewarded for completing tasks early and reminders to stay on track.",
     "version": "1.0",
+    "permissions": [
+        "storage", 
+        "alarms", 
+        "notifications", 
+        "activeTab",
+        "scripting"
+    ],
     "icons": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
       "192": "icons/icon192.png"
     },
-    "permissions": ["storage", "alarms", "notifications"],
-    "host_permissions": ["https://*.instructure.com/*"],
+    "host_permissions": [
+      "https://*.instructure.com/*",
+      "https://canvas.tamu.edu/*"
+    ],
     "background": {
       "service_worker": "background.js"
     },
@@ -23,7 +31,7 @@
     },
     "content_scripts": [
       {
-        "matches": ["https://*.instructure.com/*"],
+        "matches": ["https://*.instructure.com/*", "https://canvas.tamu.edu/*"],
         "js": ["content.js"]
       }
     ]
