@@ -9,6 +9,18 @@ body {
   background-color: #eb8228; /* Background color below the gradient */
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3rem; /* Adjust height to match the title container */
+  background: linear-gradient(to bottom, rgba(247, 244, 234, 1), rgba(247, 244, 234, 0));
+  pointer-events: none; /* Allow clicks to pass through */
+  z-index: 5; /* Ensure it stays below the title container */
+}
+
 h1 {
   font-size: 1.5rem;
   text-align: center;
@@ -146,6 +158,7 @@ details summary {
   font-family: 'Bangers', cursive;
   color: #eb8228;
   font-size: 2rem; /* Increase font size */
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black; /* Outline black */
 }
 
 #back-button {
@@ -172,6 +185,15 @@ details summary {
 }
 
 .editable-title[contenteditable="true"] {
+  border: 1px dashed #ddd;
+  padding: 0.2rem;
+}
+
+.editable-course {
+  cursor: pointer;
+}
+
+.editable-course[contenteditable="true"] {
   border: 1px dashed #ddd;
   padding: 0.2rem;
 }
@@ -251,6 +273,10 @@ details summary {
   align-items: center; /* Vertically align the icon with the text */
   gap: 2px; /* Space between the title and the icon */
   margin-bottom: 1rem; /* Add some space below the title section */
+  position: sticky; /* Make the title container sticky */
+  top: 0; /* Stick to the top */
+  z-index: 10; /* Ensure it stays above other elements */
+  padding: 0.5rem; /* Add some padding */
 }
 
 .mascot-icon {
@@ -294,6 +320,9 @@ details summary {
 #milestones li.completed {
   background-color: #4CAF50;
   color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add drop shadow */
+  border: 2px solid #4CAF50; /* Add outline */
+  font-weight: bold;
 }
 
 .points-earned {

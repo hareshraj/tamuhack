@@ -15,4 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("back-button").addEventListener("click", () => {
     window.location.href = "popup.html";
   });
+
+  // Remove course title edit functionality
 });
