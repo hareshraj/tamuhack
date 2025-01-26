@@ -92,9 +92,22 @@ details summary {
 }
 
 .view-on-canvas {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.view-on-canvas img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mark-completed {
   display: inline-block;
   padding: 0.5rem 1rem;
-  background-color: #e80031; /* Canvas Red color */
+  background-color: #e80031; /* Red color */
   color: white;
   text-decoration: none;
   border-radius: 5px;
@@ -103,4 +116,11 @@ details summary {
   text-align: center;
   margin-top: 0.5rem;
   font-weight: bold; /* Bold font */
+  margin-left: 0.5rem; /* Space between buttons */
+}
+
+.assignment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

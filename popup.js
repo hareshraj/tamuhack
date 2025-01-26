@@ -19,12 +19,15 @@ async function fetchICalData(url) {
           const summary = vevent.summary || "No Title";
           const classMatch = summary.match(/\[([A-Za-z]+)(?:[-\s]?(\d{3}))?/);
           const course = classMatch ? `${classMatch[1]} ${classMatch[2] || ""}`.trim() : "Unknown Course";
+          const status = vevent.component.getFirstPropertyValue("status") || "Not Submitted";
           return {
+              id: vevent.uid,
               title: summary,
               dueDate: vevent.startDate.toJSDate(),
               description: vevent.description || "No Description",
               link: vevent.component.getFirstPropertyValue("url") || "No Link",
-              course: course
+              course: course,
+              status: status
           };
       });
 
@@ -81,36 +84,63 @@ async function fetchAndDisplayAssignments(icalUrl) {
     return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  assignmentList.innerHTML = `
-    ${courses.map(course => `
+  chrome.storage.local.get("completedAssignments", (data) => {
+    const completedAssignments = data.completedAssignments || [];
+
+    assignmentList.innerHTML = `
+      ${courses.map(course => `
+        <details>
+          <summary>${course}</summary>
+          <ul>
+            ${upcomingAssignments.filter(a => a.course === course).map(a => `
+              <li>
+                <div class="assignment-header">
+                  <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                  <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                </div>
+                <div class="due">Due: ${formatDate(a.dueDate)}</div>
+                ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
+              </li>
+            `).join('')}
+          </ul>
+        </details>
+      `).join('')}
       <details>
-        <summary>${course}</summary>
+        <summary>Past Due Assignments</summary>
         <ul>
-          ${upcomingAssignments.filter(a => a.course === course).map(a => `
+          ${pastDueAssignments.map(a => `
             <li>
-              <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+              <div class="assignment-header">
+                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+              </div>
               <div class="due">Due: ${formatDate(a.dueDate)}</div>
               ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-              <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+              <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+              <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
             </li>
           `).join('')}
         </ul>
       </details>
-    `).join('')}
-    <details>
-      <summary>Past Due Assignments</summary>
-      <ul>
-        ${pastDueAssignments.map(a => `
-          <li>
-            <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-            <div class="due">Due: ${formatDate(a.dueDate)}</div>
-            ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-            <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
-          </li>
-        `).join('')}
-      </ul>
-    </details>
-  `;
+    `;
+
+    document.querySelectorAll(".mark-completed").forEach(button => {
+      button.addEventListener("click", (event) => {
+        const id = event.target.getAttribute("data-id");
+        chrome.storage.local.get("completedAssignments", (data) => {
+          const completedAssignments = data.completedAssignments || [];
+          if (!completedAssignments.includes(id)) {
+            completedAssignments.push(id);
+            chrome.storage.local.set({ completedAssignments }, () => {
+              event.target.previousElementSibling.textContent = "Status: Completed";
+            });
+          }
+        });
+      });
+    });
+  });
 
   chrome.storage.local.set({ assignments, lastFetch: Date.now() }); // Save assignments and timestamp
 }
@@ -140,36 +170,63 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
         return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       };
 
-      assignmentList.innerHTML = `
-        ${courses.map(course => `
+      chrome.storage.local.get("completedAssignments", (data) => {
+        const completedAssignments = data.completedAssignments || [];
+
+        assignmentList.innerHTML = `
+          ${courses.map(course => `
+            <details>
+              <summary>${course}</summary>
+              <ul>
+                ${upcomingAssignments.filter(a => a.course === course).map(a => `
+                  <li>
+                    <div class="assignment-header">
+                      <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                      <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                    </div>
+                    <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
+                    ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                    <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                    <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
+                  </li>
+                `).join('')}
+              </ul>
+            </details>
+          `).join('')}
           <details>
-            <summary>${course}</summary>
+            <summary>Past Due Assignments</summary>
             <ul>
-              ${upcomingAssignments.filter(a => a.course === course).map(a => `
+              ${pastDueAssignments.map(a => `
                 <li>
-                  <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                  <div class="assignment-header">
+                    <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                    <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                  </div>
                   <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
                   ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                  <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                  <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                  <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
                 </li>
               `).join('')}
             </ul>
           </details>
-        `).join('')}
-        <details>
-          <summary>Past Due Assignments</summary>
-          <ul>
-            ${pastDueAssignments.map(a => `
-              <li>
-                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
-                ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
-              </li>
-            `).join('')}
-          </ul>
-        </details>
-      `;
+        `;
+
+        document.querySelectorAll(".mark-completed").forEach(button => {
+          button.addEventListener("click", (event) => {
+            const id = event.target.getAttribute("data-id");
+            chrome.storage.local.get("completedAssignments", (data) => {
+              const completedAssignments = data.completedAssignments || [];
+              if (!completedAssignments.includes(id)) {
+                completedAssignments.push(id);
+                chrome.storage.local.set({ completedAssignments }, () => {
+                  event.target.previousElementSibling.textContent = "Status: Completed";
+                });
+              }
+            });
+          });
+        });
+      });
   }
 
   if (!data.lastFetch || (Date.now() - data.lastFetch > thirtyMinutes)) {
