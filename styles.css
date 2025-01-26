@@ -319,6 +319,7 @@ details summary {
 #milestones ul {
   list-style-type: none;
   padding: 0;
+  margin-bottom: 2rem;
 }
 
 #milestones li {
@@ -334,6 +335,13 @@ details summary {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add drop shadow */
   border: 2px solid #4CAF50; /* Add outline */
   font-weight: bold;
+}
+
+.milestones-title {
+  font-family: 'Bangers', cursive;
+  color: #eb8228;
+  font-size: 1.4rem; /* Increase font size */
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black; /* Outline black */
 }
 
 .points-earned {
