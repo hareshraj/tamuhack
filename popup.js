@@ -238,9 +238,7 @@ chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned",
                             pointsEarned: pointsEarnedData
                         }, () => {
                             // Update UI
-                            
-
-event.target.previousElementSibling.previousElementSibling.textContent = "Status: Not Completed";
+                            event.target.previousElementSibling.previousElementSibling.textContent = "Status: Not Completed";
                             event.target.previousElementSibling.textContent = "";
                             event.target.textContent = "Mark as Completed";
                             
@@ -260,8 +258,11 @@ event.target.previousElementSibling.previousElementSibling.textContent = "Status
                         // Mark assignment as completed or late
                         const now = new Date();
                         let pointsEarned;
-                        if (dueDate < now) {
-                            pointsEarned = 10; // Points for marking as late
+                        if (dueDate.toDateString() === now.toDateString()) {
+                            pointsEarned = 5; // Points for same day completion
+                            event.target.textContent = "Unmark as Completed";
+                        } else if (dueDate < now) {
+                            pointsEarned = -50; // Points for marking as late
                             event.target.textContent = "Unmark as Late";
                         } else {
                             pointsEarned = calculatePoints(dueDate, now);

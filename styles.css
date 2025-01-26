@@ -24,7 +24,7 @@ body::before {
 h1 {
   font-size: 1.5rem;
   text-align: center;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
+  text-shadow: 4px 4px 6px rgba(0, 0, 0, 0.2); /* Add shadow */
 }
 
 label {
@@ -309,11 +309,12 @@ details summary {
 #points-summary h2 {
   font-size: 24px;
   margin: 0;
+  text-align: center;
 }
 
 #reward-icon {
-  width: 64px;
-  height: 64px;
+  width: 100px;
+  height: 100px;
 }
 
 #milestones ul {
