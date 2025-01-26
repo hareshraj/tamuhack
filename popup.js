@@ -56,40 +56,6 @@ async function fetchICalData(url) {
   }
 }
 
-document.getElementById("save-url").addEventListener("click", async () => {
-  const icalUrl = document.getElementById("ical-url").value;
-  const urlPattern = /^https?:\/\/.*\.ics$/i; // Regex pattern to validate iCal URL
-  if (icalUrl && urlPattern.test(icalUrl)) {
-    const saveTime = new Date().getTime();
-    chrome.storage.local.set({ icalUrl, saveTime }, async () => {
-      document.getElementById("ical-url").style.display = "none";
-      document.getElementById("save-url").style.display = "none";
-      document.querySelector("label[for='ical-url']").style.display = "none";
-      await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
-    });
-  } else {
-    alert("Please enter a valid iCal URL ending with .ics.");
-  }
-});
-
-document.getElementById("fetch").addEventListener("click", async () => {
-  chrome.storage.local.get("icalUrl", async (data) => {
-      if (data.icalUrl) {
-          await fetchAndDisplayAssignments(data.icalUrl);
-      } else {
-          alert("Please save your iCal URL first!");
-      }
-  });
-});
-
-document.getElementById("open-calendar").addEventListener("click", () => {
-  chrome.tabs.create({ url: "https://canvas.tamu.edu/calendar#view_name=agenda" });
-});
-
-document.getElementById("open-settings").addEventListener("click", () => {
-  window.location.href = "settings.html";
-});
-
 async function fetchAndDisplayAssignments(icalUrl) {
     const assignmentList = document.getElementById("assignment-list");
     const pointsDisplay = document.getElementById("points-total");
@@ -148,9 +114,11 @@ chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned",
         }
         updateRewardIcon(totalPoints, rewardIconDisplay);
 
+        const dueTodayNotCompleted = dueTodayAssignments.filter(a => !completedAssignments.includes(a.id)).length;
+
         assignmentList.innerHTML = `
             <details>
-                <summary>Due Today</summary>
+                <summary>▷ Due Today (${dueTodayNotCompleted} Remaining)</summary>
                 <ul>
                     ${dueTodayAssignments.map(a => `
                         <li>
@@ -169,42 +137,63 @@ chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned",
                     `).join('')}
                 </ul>
             </details>
-            ${courses.map(course => `
-                <details>
-                    <summary>${course}</summary>
-                    <ul>
-
-${upcomingAssignments.filter(a => a.course === course).map(a => `
-              <li>
-                <div class="assignment-header">
-                  <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                  <a href="${a.link}" target="_blank" class="view-on-canvas">
-                    <img src="./images/CanvasLogo.svg" alt="View on Canvas">
-                  </a>
-                </div>
-<div class="due">Due: ${formatDate(a.dueDate)}</div>
-                                ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                                <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                                <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
-                                <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </details>
-            `).join('')}
+            ${courses.map(course => {
+                const courseAssignments = upcomingAssignments.filter(a => a.course === course);
+                const notCompletedCount = courseAssignments.filter(a => !completedAssignments.includes(a.id)).length;
+                return `
+                    <details>
+                        <summary>▷ ${course} (${notCompletedCount} Remaining)</summary>
+                        <ul>
+                            ${courseAssignments.map(a => `
+                                <li>
+                                    <div class="assignment-header">
+                                        <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                        <a href="${a.link}" target="_blank" class="view-on-canvas">
+                                            <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                                        </a>
+                                    </div>
+                                    <div class="due">Due: ${formatDate(a.dueDate)}</div>
+                                    ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                                    <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                                    <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
+                                    <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </details>
+                `;
+            }).join('')}
             <details>
-                <summary>Past Due Assignments</summary>
-
-<ul>
-          ${pastDueAssignments.map(a => `
-            <li>
-              <div class="assignment-header">
-                <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                <a href="${a.link}" target="_blank" class="view-on-canvas">
-                  <img src="./images/CanvasLogo.svg" alt="View on Canvas">
-                </a>
-              </div>
-<div class="due">Due: ${formatDate(a.dueDate)}</div>
+                <summary>▷ Upcoming Assignments</summary>
+                <ul>
+                    ${upcomingAssignments.sort((a, b) => a.dueDate - b.dueDate).map(a => `
+                        <li>
+                            <div class="assignment-header">
+                                <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                <a href="${a.link}" target="_blank" class="view-on-canvas">
+                                    <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                                </a>
+                            </div>
+                            <div class="due">Due: ${formatDate(a.dueDate)}</div>
+                            ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                            <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                            <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </details>
+            <details>
+                <summary>▷ Past Due Assignments</summary>
+                <ul>
+                    ${pastDueAssignments.map(a => `
+                        <li>
+                            <div class="assignment-header">
+                                <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                <a href="${a.link}" target="_blank" class="view-on-canvas">
+                                    <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                                </a>
+                            </div>
+                            <div class="due">Due: ${formatDate(a.dueDate)}</div>
                             ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
                             <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
                             <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
@@ -214,6 +203,13 @@ ${upcomingAssignments.filter(a => a.course === course).map(a => `
                 </ul>
             </details>
         `;
+
+        // Add event listeners to update the arrow when details are toggled
+        document.querySelectorAll("details").forEach(details => {
+            details.addEventListener("toggle", () => {
+                updateRemainingCount();
+            });
+        });
 
         document.querySelectorAll(".toggle-completed").forEach(button => {
             button.addEventListener("click", (event) => {
@@ -256,6 +252,9 @@ event.target.previousElementSibling.previousElementSibling.textContent = "Status
 
                             // Update milestones
                             updateMilestones(totalPoints);
+
+                            // Update remaining count
+                            updateRemainingCount();
                         });
                     } else {
                         // Mark assignment as completed or late
@@ -290,6 +289,9 @@ event.target.previousElementSibling.previousElementSibling.textContent = "Status
 
                             // Update milestones
                             updateMilestones(totalPoints);
+
+                            // Update remaining count
+                            updateRemainingCount();
                         });
                     }
                 });
@@ -362,6 +364,29 @@ function updateMilestones(points) {
     }
 }
 
+function updateRemainingCount() {
+    const detailsElements = document.querySelectorAll("details");
+    detailsElements.forEach(details => {
+        const summary = details.querySelector("summary");
+        const notCompletedCount = Array.from(details.querySelectorAll("li .status")).filter(status => !status.textContent.includes("Completed")).length;
+        const summaryText = summary.textContent.replace(/^▽|▷/, '').split('(')[0].trim();
+        if (summaryText.includes("Past Due Assignments") || summaryText.includes("Upcoming Assignments")) {
+            summary.textContent = `${details.open ? '▽' : '▷'} ${summaryText}`;
+        } else {
+            summary.textContent = `${details.open ? '▽' : '▷'} ${summaryText} (${notCompletedCount} Remaining)`;
+        }
+    });
+}
+
+// Add event listeners to update the arrow when details are toggled
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("details").forEach(details => {
+        details.addEventListener("toggle", () => {
+            updateRemainingCount();
+        });
+    });
+});
+
 // Modify the initial load to reset points if needed (optional)
 chrome.storage.local.get(["totalPoints"], (data) => {
     if (data.totalPoints === undefined) {
@@ -373,6 +398,16 @@ chrome.storage.local.get(["totalPoints"], (data) => {
 // Check if iCal URL is already saved and hide input, button, and label if it is
 chrome.storage.local.get("icalUrl", (data) => {
     if (data.icalUrl) {
+        const assignmentList = document.getElementById("assignment-list");
+        const pointsDisplay = document.getElementById("points-total");
+        const rewardIconDisplay = document.getElementById("reward-icon");
+
+        // Add null checks for critical elements
+        if (!assignmentList || !pointsDisplay || !rewardIconDisplay) {
+            console.error("Critical DOM elements are missing!");
+            return; // Exit the function if critical elements are not found
+        }
+
         document.getElementById("ical-url").style.display = "none";
         document.getElementById("save-url").style.display = "none";
         document.querySelector("label[for='ical-url']").style.display = "none";
@@ -411,7 +446,7 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
             assignmentList.innerHTML = `
                 ${courses.map(course => `
                     <details>
-                        <summary>${course}</summary>
+                        <summary>▷ ${course}</summary>
                         <ul>
                             ${upcomingAssignments.filter(a => a.course === course).map(a => `
                                 <li>
@@ -424,14 +459,32 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
 <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
                                     ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
                                     <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                                    <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
                                 </li>
                             `).join('')}
                         </ul>
                     </details>
                 `).join('')}
                 <details>
-                    <summary>Past Due Assignments</summary>
+                    <summary>▷ Upcoming Assignments</summary>
+                    <ul>
+                        ${upcomingAssignments.sort((a, b) => a.dueDate - b.dueDate).map(a => `
+                            <li>
+                                <div class="assignment-header">
+                                    <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                    <a href="${a.link}" target="_blank" class="view-on-canvas">
+                                        <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                                    </a>
+                                </div>
+                                <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
+                                ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                                <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                                <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </details>
+                <details>
+                    <summary>▷ Past Due Assignments</summary>
                     <ul>
                         ${pastDueAssignments.map(a => `
                             <li>
@@ -459,5 +512,29 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
             await fetchAndDisplayAssignments(data.icalUrl); // Fetch assignments if more than 30 minutes have passed
         }
     }
+});
+
+document.getElementById("save-url").addEventListener("click", async () => {
+  const icalUrl = document.getElementById("ical-url").value;
+  const urlPattern = /^https?:\/\/.*\.ics$/i; // Regex pattern to validate iCal URL
+  if (icalUrl && urlPattern.test(icalUrl)) {
+    const saveTime = new Date().getTime();
+    chrome.storage.local.set({ icalUrl, saveTime }, async () => {
+      document.getElementById("ical-url").style.display = "none";
+      document.getElementById("save-url").style.display = "none";
+      document.querySelector("label[for='ical-url']").style.display = "none";
+      await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
+    });
+  } else {
+    alert("Please enter a valid iCal URL ending with .ics.");
+  }
+});
+
+document.getElementById("open-calendar").addEventListener("click", () => {
+  chrome.tabs.create({ url: "https://canvas.tamu.edu/calendar#view_name=agenda" });
+});
+
+document.getElementById("open-settings").addEventListener("click", () => {
+  window.location.href = "settings.html";
 });
 

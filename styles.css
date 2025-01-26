@@ -68,11 +68,12 @@ li {
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #f9f9f9;
+  word-wrap: break-word; /* Ensure text wraps within the box */
 }
 
-.top-buttons {
+.bottom-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 
@@ -87,18 +88,11 @@ li {
   height: 32px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-#fetch {
-  background-color: transparent;
-  color: black;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  
 }
 
 #open-settings {
+  background-color: white;
   background: none;
   border: none;
   cursor: pointer;
@@ -122,6 +116,15 @@ details {
 
 details summary {
   font-size: 1.25rem; /* Increase font size */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer; /* Add pointer cursor */
+}
+
+.count-remaining {
+  font-size: 0.875rem; /* Smaller font size */
+  color: #555; /* Slightly lighter color */
 }
 
 .view-on-canvas {
