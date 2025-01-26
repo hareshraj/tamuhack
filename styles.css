@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   padding: 1rem;
   width: 300px;
-  border-radius: 15px; /* Add rounded corners */
+  overflow-y: auto; /* Enable scrolling if content overflows */
 }
 
 h1 {
@@ -45,10 +47,13 @@ li {
   background-color: #f9f9f9;
 }
 
+.top-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 #open-calendar {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   background: none;
   border: none;
   cursor: pointer;
@@ -62,13 +67,36 @@ li {
 }
 
 #fetch {
-  position: absolute;
-  top: 10px;
-  left: 10px;
   background-color: white;
   color: black;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+details {
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Drop shadow */
+  margin-bottom: 1rem; /* Space between sections */
+  padding: 0.5rem; /* Padding inside the details */
+  background-color: #fff; /* Background color */
+}
+
+details summary {
+  font-size: 1.25rem; /* Increase font size */
+}
+
+.view-on-canvas {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #e80031; /* Canvas Red color */
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Drop shadow */
+  cursor: pointer;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: bold; /* Bold font */
 }
