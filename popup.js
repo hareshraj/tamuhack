@@ -1,80 +1,76 @@
 async function fetchICalData(url) {
-    console.log("Fetching iCal URL:", url); // Debugging
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch iCal: ${response.statusText}`);
-        }
+  console.log("Fetching iCal URL:", url); // Debugging
+  try {
+      const response = await fetch(url);
+      if (!response.ok) {
+          throw new Error(`Failed to fetch iCal: ${response.statusText}`);
+      }
 
-        const icalText = await response.text();
-        console.log("Fetched iCal data:", icalText.substring(0, 500)); // Log partial content for debugging
+      const icalText = await response.text();
+      console.log("Fetched iCal data:", icalText.substring(0, 500)); // Log partial content for debugging
 
-        // Parse iCal data
-        const parsedData = ICAL.parse(icalText);
-        const comp = new ICAL.Component(parsedData);
-        const events = comp.getAllSubcomponents("vevent");
+      // Parse iCal data
+      const parsedData = ICAL.parse(icalText);
+      const comp = new ICAL.Component(parsedData);
+      const events = comp.getAllSubcomponents("vevent");
 
-      const assignments = events.map(event => {
-          const vevent = new ICAL.Event(event);
-          const summary = vevent.summary || "No Title";
-          const classMatch = summary.match(/\[([A-Za-z]+)(?:[-\s]?(\d{3}))?/);
-          const course = classMatch ? `${classMatch[1]} ${classMatch[2] || ""}`.trim() : "Unknown Course";
-          const status = vevent.component.getFirstPropertyValue("status") || "Not Submitted";
-          return {
-              id: vevent.uid,
-              title: summary,
-              dueDate: vevent.startDate.toJSDate(),
-              description: vevent.description || "No Description",
-              link: vevent.component.getFirstPropertyValue("url") || "No Link",
-              course: course,
-              status: status === "COMPLETED" ? "Submitted" : "Not Submitted"
-          };
-      });
+        const assignments = events.map(event => {
+            const vevent = new ICAL.Event(event);
+            const summary = vevent.summary || "No Title";
+            const classMatch = summary.match(/\[([A-Za-z]+)(?:[-\s]?(\d{3}))?/);
+            const course = classMatch ? `${classMatch[1]} ${classMatch[2] || ""}`.trim() : "Unknown Course";
+            const status = vevent.component.getFirstPropertyValue("status") || "Not Submitted";
+            return {
+                id: vevent.uid,
+                title: summary,
+                dueDate: vevent.startDate.toJSDate(), // Ensure correct time zone handling
+                description: vevent.description || "No Description",
+                link: vevent.component.getFirstPropertyValue("url") || "No Link",
+                course: course,
+                status: status
+            };
+        });
 
-        console.log("Assignments parsed:", assignments); // Debug parsed assignments
-        return assignments;
-    } catch (error) {
-        console.error("Error fetching/parsing iCal data:", error);
-        return [];
-    }
+ console.log("Assignments parsed:", assignments); // Debug parsed assignments
+ 
+ // Ensure all courses are included
+ const allCourses = [...new Set(assignments.map(a => a.course))];
+ console.log("All courses:", allCourses); // Debugging
+
+      return assignments;
+  } catch (error) {
+      console.error("Error fetching/parsing iCal data:", error);
+      return [];
+  }
 }
 
 document.getElementById("save-url").addEventListener("click", async () => {
-    const icalUrl = document.getElementById("ical-url").value;
-    if (icalUrl) {
-        chrome.storage.local.set({ icalUrl }, async () => {
-            alert("iCal URL saved!");
-            document.getElementById("ical-url").style.display = "none";
-            document.getElementById("save-url").style.display = "none";
-            document.querySelector("label[for='ical-url']").style.display = "none";
-            await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
-        });
-    } else {
-        alert("Please enter a valid iCal URL.");
-    }
+  const icalUrl = document.getElementById("ical-url").value;
+  if (icalUrl) {
+      chrome.storage.local.set({ icalUrl }, async () => {
+          alert("iCal URL saved!");
+          document.getElementById("ical-url").style.display = "none";
+          document.getElementById("save-url").style.display = "none";
+          document.querySelector("label[for='ical-url']").style.display = "none";
+          await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
+      });
+  } else {
+      alert("Please enter a valid iCal URL.");
+  }
 });
 
 document.getElementById("fetch").addEventListener("click", async () => {
-    chrome.storage.local.get("icalUrl", async (data) => {
-        if (data.icalUrl) {
-            await fetchAndDisplayAssignments(data.icalUrl);
-        } else {
-            alert("Please save your iCal URL first!");
-        }
-    });
+  chrome.storage.local.get("icalUrl", async (data) => {
+      if (data.icalUrl) {
+          await fetchAndDisplayAssignments(data.icalUrl);
+      } else {
+          alert("Please save your iCal URL first!");
+      }
+  });
 });
 
 document.getElementById("open-calendar").addEventListener("click", () => {
-    chrome.tabs.create({ url: "https://canvas.tamu.edu/calendar#view_name=agenda" });
-});
-
-document.getElementById("reset-points").addEventListener("click", () => {
-    chrome.storage.local.set({ totalPoints: 0, completedAssignments: [], pointsEarned: {} }, () => {
-        alert("Points reset to 0!");
-        document.getElementById("points-total").textContent = "Total Points: 0";
-        document.getElementById("reward-icon").src = getRewardIcon(0);
-        fetchAndDisplayAssignments(document.getElementById("ical-url").value);
-    });
+  chrome.tabs.create({ url: "https://canvas.tamu.edu/calendar#view_name=agenda" });
 });
 
 document.getElementById("open-settings").addEventListener("click", () => {
@@ -96,17 +92,24 @@ async function fetchAndDisplayAssignments(icalUrl) {
 
     const assignments = await fetchICalData(icalUrl);
     const now = new Date();
+    const startOfNextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
-    const pastDueAssignments = assignments.filter(a => a.dueDate < now);
-    const upcomingAssignments = assignments.filter(a => a.dueDate >= now);
+    // Ensure all courses are included
+    const allCourses = [...new Set(assignments.map(a => a.course))];
+    console.log("All courses:", allCourses); // Debugging
 
-    const courses = [...new Set(upcomingAssignments.map(a => a.course))];
+const pastDueAssignments = assignments.filter(a => a.dueDate.getTime() < startOfDay.getTime());
+const dueTodayAssignments = assignments.filter(a => a.dueDate.getTime() >= startOfDay.getTime() && a.dueDate.getTime() < startOfNextDay.getTime());
+const upcomingAssignments = assignments.filter(a => a.dueDate.getTime() >= startOfNextDay.getTime());
 
-    const formatDate = (date) => {
-        return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    };
+  const courses = [...new Set(upcomingAssignments.map(a => a.course))];
 
-    chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned"], (data) => {
+  const formatDate = (date) => {
+    return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned"], (data) => {
         const completedAssignments = data.completedAssignments || [];
         const totalPoints = data.totalPoints || 0;
         const pointsEarnedData = data.pointsEarned || {};
@@ -122,19 +125,40 @@ async function fetchAndDisplayAssignments(icalUrl) {
         updateRewardIcon(totalPoints, rewardIconDisplay);
 
         assignmentList.innerHTML = `
+            <details>
+                <summary>Due Today</summary>
+                <ul>
+                    ${dueTodayAssignments.map(a => `
+                        <li>
+                            <div class="assignment-header">
+                                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                <a href="${a.link}" target="_blank" class="view-on-canvas">
+                                    <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                                </a>
+                            </div>
+                            <div class="due">Due: ${formatDate(a.dueDate)}</div>
+                            ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                            <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                            <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
+                            <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
+                        </li>
+                    `).join('')}
+                </ul>
+            </details>
             ${courses.map(course => `
                 <details>
                     <summary>${course}</summary>
                     <ul>
-                        ${upcomingAssignments.filter(a => a.course === course).map(a => `
-                            <li>
-                                <div class="assignment-header">
-                                    <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                                    <a href="${a.link}" target="_blank" class="view-on-canvas">
-                                      <img src="./images/CanvasLogo.svg" alt="View on Canvas">
-                                    </a>
-                                </div>
-                                <div class="due">Due: ${formatDate(a.dueDate)}</div>
+
+${upcomingAssignments.filter(a => a.course === course).map(a => `
+              <li>
+                <div class="assignment-header">
+                  <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                  <a href="${a.link}" target="_blank" class="view-on-canvas">
+                    <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                  </a>
+                </div>
+<div class="due">Due: ${formatDate(a.dueDate)}</div>
                                 ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
                                 <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
                                 <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
@@ -146,14 +170,17 @@ async function fetchAndDisplayAssignments(icalUrl) {
             `).join('')}
             <details>
                 <summary>Past Due Assignments</summary>
-                <ul>
-                    ${pastDueAssignments.map(a => `
-                        <li>
-                            <div class="assignment-header">
-                                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                                <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
-                            </div>
-                            <div class="due">Due: ${formatDate(a.dueDate)}</div>
+
+<ul>
+          ${pastDueAssignments.map(a => `
+            <li>
+              <div class="assignment-header">
+                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                <a href="${a.link}" target="_blank" class="view-on-canvas">
+                  <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                </a>
+              </div>
+<div class="due">Due: ${formatDate(a.dueDate)}</div>
                             ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
                             <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
                             <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
@@ -190,7 +217,9 @@ async function fetchAndDisplayAssignments(icalUrl) {
                             pointsEarned: pointsEarnedData
                         }, () => {
                             // Update UI
-                            event.target.previousElementSibling.previousElementSibling.textContent = "Status: Not Completed";
+                            
+
+event.target.previousElementSibling.previousElementSibling.textContent = "Status: Not Completed";
                             event.target.previousElementSibling.textContent = "";
                             event.target.textContent = "Mark as Completed";
                             
@@ -242,7 +271,9 @@ async function fetchAndDisplayAssignments(icalUrl) {
 
 function calculatePoints(dueDate, completionDate) {
     const timeDifference = completionDate - dueDate;
-    
+    const startOfDay = new Date(completionDate.getFullYear(), completionDate.getMonth(), completionDate.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(completionDate.getFullYear(), completionDate.getMonth(), completionDate.getDate(), 23, 59, 59, 999);
+
     if (timeDifference < 0) {
         // Early submission
         const daysEarly = Math.floor(-timeDifference / (1000 * 60 * 60 * 24));
@@ -255,22 +286,30 @@ function calculatePoints(dueDate, completionDate) {
     } else if (timeDifference > 0) {
         // Late submission
         const daysLate = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        if (daysLate < 1) return 5; // Late but within a day
         if (daysLate <= 1) return -25; // Late but within a day
         return -50; // More than a day late
+    } else if (dueDate >= startOfDay && dueDate <= endOfDay) {
+        // Completed on the same day it is due
+        return 5;
     }
     return 0; // On-time submission
 }
 
 function getRewardIcon(points) {
     if (points >= 500) return 'icons/proudnate.png';
-    if (points >= 250) return 'icons/thumbsupnate.png';
+    if (points >= 250) return 'icons/laughingnate.png';
     if (points >= 0) return 'icons/angrynate.png';
     return 'icons/angrynate.png';
 }
 
 function updateRewardIcon(points, iconElement) {
     if (iconElement) {
-        iconElement.src = getRewardIcon(points);
+        if (points < 0) {
+            iconElement.src = 'icons/angrynate.png';
+        } else {
+            iconElement.src = getRewardIcon(points);
+        }
     }
 }
 
@@ -282,6 +321,8 @@ function updateMilestones(points) {
             const pointsRequired = parseInt(milestone.textContent.split(':')[1]);
             if (points >= pointsRequired) {
                 milestone.classList.add('completed');
+            } else {
+                milestone.classList.remove('completed');
             }
         });
     }
@@ -291,9 +332,10 @@ function updateMilestones(points) {
 chrome.storage.local.get(["totalPoints"], (data) => {
     if (data.totalPoints === undefined) {
         chrome.storage.local.set({ totalPoints: 0 });
+    } else {
+        updateMilestones(data.totalPoints); // Refresh milestone markers on load
     }
 });
-
 // Check if iCal URL is already saved and hide input, button, and label if it is
 chrome.storage.local.get("icalUrl", (data) => {
     if (data.icalUrl) {
@@ -330,156 +372,72 @@ document.getElementById("save-url").addEventListener("click", async () => {
 
 // Display saved assignments when the extension is opened and check for updates if needed
 chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) => {
-  const assignmentList = document.getElementById("assignment-list");
-  const now = new Date();
-  const thirtyMinutes = 30 * 60 * 1000;
+    const assignmentList = document.getElementById("assignment-list");
+    const now = new Date();
+    const thirtyMinutes = 30 * 60 * 1000;
 
-  if (data.assignments && data.assignments.length > 0 && (!data.lastFetch || (Date.now() - data.lastFetch <= thirtyMinutes))) {
-      const pastDueAssignments = data.assignments.filter(a => new Date(a.dueDate) < now);
-      const upcomingAssignments = data.assignments.filter(a => new Date(a.dueDate) >= now);
+    if (data.assignments && data.assignments.length > 0 && (!data.lastFetch || (Date.now() - data.lastFetch <= thirtyMinutes))) {
+        const pastDueAssignments = data.assignments.filter(a => new Date(a.dueDate) < now);
+        const upcomingAssignments = data.assignments.filter(a => new Date(a.dueDate) >= now);
 
-      const courses = [...new Set(upcomingAssignments.map(a => a.course))];
+        const courses = [...new Set(upcomingAssignments.map(a => a.course))];
 
-      const formatDate = (date) => {
-        return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      };
+        const formatDate = (date) => {
+            return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        };
 
-      chrome.storage.local.get("completedAssignments", (data) => {
-        const completedAssignments = data.completedAssignments || [];
+        chrome.storage.local.get("completedAssignments", (data) => {
+            const completedAssignments = data.completedAssignments || [];
 
-        assignmentList.innerHTML = `
-          ${courses.map(course => `
-            <details>
-              <summary>${course}</summary>
-              <ul>
-                ${upcomingAssignments.filter(a => a.course === course).map(a => `
-                  <li>
-                    <div class="assignment-header">
-                      <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                      <a href="${a.link}" target="_blank" class="view-on-canvas">
+            assignmentList.innerHTML = `
+                ${courses.map(course => `
+                    <details>
+                        <summary>${course}</summary>
+                        <ul>
+                            ${upcomingAssignments.filter(a => a.course === course).map(a => `
+                                <li>
+                                    <div class="assignment-header">
+                                        <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+<a href="${a.link}" target="_blank" class="view-on-canvas">
                         <img src="./images/CanvasLogo.svg" alt="View on Canvas">
                       </a>
                     </div>
-                    <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
-                    ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                    <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+<div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
+                                    ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                                    <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
                                     <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
-                  </li>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </details>
                 `).join('')}
-              </ul>
-            </details>
-          `).join('')}
-          <details>
-            <summary>Past Due Assignments</summary>
-            <ul>
-              ${pastDueAssignments.map(a => `
-                <li>
-                  <div class="assignment-header">
-                    <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                    <a href="${a.link}" target="_blank" class="view-on-canvas">
+                <details>
+                    <summary>Past Due Assignments</summary>
+                    <ul>
+                        ${pastDueAssignments.map(a => `
+                            <li>
+                                <div class="assignment-header">
+                                    <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+<a href="${a.link}" target="_blank" class="view-on-canvas">
                       <img src="./images/CanvasLogo.svg" alt="View on Canvas">
                     </a>
                   </div>
-                  <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
-                  ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                  <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                                    <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
-                </li>
-              `).join('')}
-            </ul>
-          </details>
-        `;
-
-        document.querySelectorAll(".mark-completed").forEach(button => {
-          button.addEventListener("click", (event) => {
-            const id = event.target.getAttribute("data-id");
-            chrome.storage.local.get("completedAssignments", (data) => {
-              let completedAssignments = data.completedAssignments || [];
-              if (completedAssignments.includes(id)) {
-                completedAssignments = completedAssignments.filter(aid => aid !== id);
-                event.target.textContent = "Mark as Submitted";
-                event.target.previousElementSibling.textContent = "Status: Not Submitted";
-              } else {
-                completedAssignments.push(id);
-                event.target.textContent = "Mark as Not Submitted";
-                event.target.previousElementSibling.textContent = "Status: Submitted";
-              }
-              chrome.storage.local.set({ completedAssignments });
-            });
-          });
+<div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
+                                ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
+                                <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
+                                <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </details>
+            `;
         });
-      });
-  }
+    }
 
-  if (!data.lastFetch || (Date.now() - data.lastFetch > thirtyMinutes)) {
-      if (data.icalUrl) {
-          await fetchAndDisplayAssignments(data.icalUrl); // Fetch assignments if more than 30 minutes have passed
-      }
-  }
+    if (!data.lastFetch || (Date.now() - data.lastFetch > thirtyMinutes)) {
+        if (data.icalUrl) {
+            await fetchAndDisplayAssignments(data.icalUrl); // Fetch assignments if more than 30 minutes have passed
+        }
+    }
 });
 
-// Auto-refresh assignments when the extension is opened
-document.addEventListener("DOMContentLoaded", async () => {
-  chrome.storage.local.get("icalUrl", async (data) => {
-    if (data.icalUrl) {
-      await fetchAndDisplayAssignments(data.icalUrl);
-    }
-  });
-
-  document.querySelectorAll("details summary").forEach(summary => {
-    summary.classList.add("editable-title");
-    summary.addEventListener("dblclick", (event) => {
-      const target = event.target;
-      target.setAttribute("contenteditable", "true");
-      target.focus();
-    });
-
-    summary.addEventListener("blur", (event) => {
-      const target = event.target;
-      target.removeAttribute("contenteditable");
-      // Optionally, save the new title to storage or handle it as needed
-    });
-  });
-
-  const contextMenu = document.createElement("div");
-  contextMenu.classList.add("context-menu");
-  contextMenu.innerHTML = '<div class="context-menu__item">Rename</div>';
-  document.body.appendChild(contextMenu);
-
-  document.querySelectorAll("details summary").forEach(summary => {
-    summary.classList.add("editable-title");
-
-    summary.addEventListener("dblclick", (event) => {
-      const target = event.target;
-      target.setAttribute("contenteditable", "true");
-      target.focus();
-    });
-
-    summary.addEventListener("blur", (event) => {
-      const target = event.target;
-      target.removeAttribute("contenteditable");
-      // Optionally, save the new title to storage or handle it as needed
-    });
-
-    summary.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
-      contextMenu.style.top = `${event.clientY}px`;
-      contextMenu.style.left = `${event.clientX}px`;
-      contextMenu.style.display = "block";
-      contextMenu.targetElement = event.target;
-    });
-  });
-
-  document.addEventListener("click", () => {
-    contextMenu.style.display = "none";
-  });
-
-  contextMenu.querySelector(".context-menu__item").addEventListener("click", () => {
-    const target = contextMenu.targetElement;
-    if (target) {
-      target.setAttribute("contenteditable", "true");
-      target.focus();
-    }
-    contextMenu.style.display = "none";
-  });
-});

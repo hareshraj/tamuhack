@@ -10,29 +10,24 @@
 <body>
   <div class="top-buttons">
     <button id="fetch">Refresh ⟳</button>
-    <button id="open-calendar">
-      <img src="./images/CanvasLogo.png" alt="Open Calendar">
-    </button>
-    <button id="reset-points">Reset Points</button>
+    <div class="right-buttons">
+      <button id="open-calendar">
+        <img src="./images/CanvasLogo.svg" alt="Open Calendar">
+      </button>
+      <button id="open-settings">
+        <!-- Settings logo from iconvector on vecteezy.com -->
+        <!-- https://www.vecteezy.com/vector-art/2306028-setting-icon-design-vector-sign-gear-isolated-sign -->
+        <!-- https://www.vecteezy.com/members/iconvector -->
+        <img src="./images/Settings.svg" alt="Open Settings">
+      </button>
+    </div>
   </div>
   <div class="title-container">
-    <h1>ProcrastiNate</h1>
+    <h1><span class="italic-half">Procrasti</span>&#8202;<span class="nate">NATE!</span></h1>
+
     <img src="./icons/icon192.png" alt="Mascot" class="mascot-icon">
   </div>
-  <div id="points-summary">
-    <h2 id="points-total">Total Points: 0</h2>
-    <img id="reward-icon" src="icons/thumbsupnate.png" alt="Reward Status">
-  </div>
-  <div id="milestones">
-    <h3>Milestones</h3>
-    <ul>
-      <li>Bronze Level: 100 points</li>
-      <li>Silver Level: 250 points</li>
-      <li>Gold Level: 500 points</li>
-      <li>Legendary Level: 1000 points</li>
-    </ul>
-  </div>
-  <label for="ical-url">Enter your iCal URL:</label>
+<label for="ical-url">Enter your iCal URL:</label>
   <input type="text" id="ical-url" placeholder="Paste your iCal URL here">
   <button id="save-url">Save URL</button>
 <div id="points-summary">
