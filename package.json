@@ -1,30 +1,30 @@
 {
     "dependencies": {
-      "@aws-sdk/client-comprehend": "^3.734.0",
-      "@aws-sdk/credential-providers": "^3.734.0"
+        "@aws-sdk/client-comprehend": "^3.734.0",
+        "@aws-sdk/credential-providers": "^3.734.0"
     },
     "name": "tamuhack",
     "version": "1.0.0",
     "main": "background.js",
     "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "build": "webpack --mode production",
-      "watch": "webpack --watch --mode development"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "webpack --mode production",
+        "watch": "webpack --watch --mode development"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
-      "@babel/core": "^7.26.7",
-      "@babel/preset-env": "^7.26.7",
-      "babel-loader": "^9.2.1",
-      "buffer": "^6.0.3",
-      "crypto-browserify": "^3.12.1",
-      "path-browserify": "^1.0.1",
-      "process": "^0.11.10",
-      "stream-browserify": "^3.0.0",
-      "webpack": "^5.97.1",
-      "webpack-cli": "^6.0.1"
+        "@babel/core": "^7.26.7",
+        "@babel/preset-env": "^7.26.7",
+        "babel-loader": "^9.2.1",
+        "buffer": "^6.0.3",
+        "crypto-browserify": "^3.12.1",
+        "path-browserify": "^1.0.1",
+        "process": "^0.11.10",
+        "stream-browserify": "^3.0.0",
+        "webpack": "^5.97.1",
+        "webpack-cli": "^6.0.1"
     },
     "description": ""
-  }
+}

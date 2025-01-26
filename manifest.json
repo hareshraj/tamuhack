@@ -3,10 +3,10 @@
   "name": "ProcrastiNate",
   "description": "Stay on top of your assignments with iCal integration.",
   "version": "1.0",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "notifications"],
   "host_permissions": ["https://canvas.tamu.edu/*"],
   "background": {
-      "service_worker": "background.bundle.js"
+      "service_worker": "./dist/background.bundle.js"
   },
   "action": {
       "default_popup": "popup.html",
