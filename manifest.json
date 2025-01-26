@@ -23,5 +23,11 @@
       "32": "icons/icon32.png",
       "128": "icons/icon128.png",
       "192": "icons/icon192.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["welcome.html", "welcome.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

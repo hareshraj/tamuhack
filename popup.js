@@ -1,3 +1,15 @@
+chrome.storage.local.get(["icalUrl", "welcomeShown"], (data) => {
+  if (!data.icalUrl && !data.welcomeShown) {
+    window.location.href = "welcome.html";
+  }
+});
+
+chrome.storage.local.get("welcomeShown", (data) => {
+  if (!data.welcomeShown) {
+    window.location.href = "welcome.html";
+  }
+});
+
 async function fetchICalData(url) {
   console.log("Fetching iCal URL:", url); // Debugging
   try {
@@ -46,17 +58,17 @@ async function fetchICalData(url) {
 
 document.getElementById("save-url").addEventListener("click", async () => {
   const icalUrl = document.getElementById("ical-url").value;
-  if (icalUrl) {
+  const urlPattern = /^https?:\/\/.*\.ics$/i; // Regex pattern to validate iCal URL
+  if (icalUrl && urlPattern.test(icalUrl)) {
     const saveTime = new Date().getTime();
     chrome.storage.local.set({ icalUrl, saveTime }, async () => {
-      alert("iCal URL saved!");
       document.getElementById("ical-url").style.display = "none";
       document.getElementById("save-url").style.display = "none";
       document.querySelector("label[for='ical-url']").style.display = "none";
       await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
     });
   } else {
-    alert("Please enter a valid iCal URL.");
+    alert("Please enter a valid iCal URL ending with .ics.");
   }
 });
 
@@ -308,7 +320,7 @@ function calculatePoints(dueDate, completionDate) {
     } else if (timeDifference > 0) {
         // Late submission
         const daysLate = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-        if (daysLate < 1) return 5; // Late but within a day
+        if (daysLate < 1) return 5; // Same Day***
         if (daysLate <= 1) return -25; // Late but within a day
         return -50; // More than a day late
     } else if (dueDate >= startOfDay && dueDate <= endOfDay) {
@@ -375,21 +387,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             await fetchAndDisplayAssignments(data.icalUrl);
         }
     });
-});
-
-document.getElementById("save-url").addEventListener("click", async () => {
-    const icalUrl = document.getElementById("ical-url").value;
-    if (icalUrl) {
-        chrome.storage.local.set({ icalUrl }, async () => {
-            alert("iCal URL saved!");
-            document.getElementById("ical-url").style.display = "none";
-            document.getElementById("save-url").style.display = "none";
-            document.querySelector("label[for='ical-url']").style.display = "none";
-            await fetchAndDisplayAssignments(icalUrl);
-        });
-    } else {
-        alert("Please enter a valid iCal URL.");
-    }
 });
 
 // Display saved assignments when the extension is opened and check for updates if needed

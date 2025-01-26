@@ -49,6 +49,10 @@ button {
   cursor: pointer;
 }
 
+button:hover, .mark-completed:hover, .toggle-completed:hover {
+  background-color: #388E3C; /* Darker shade of green */
+}
+
 button, input, label, h1, details summary, .view-on-canvas {
   font-family: 'Montserrat', Arial, sans-serif; /* Apply Montserrat font */
 }
@@ -284,6 +288,10 @@ details summary {
   height: 60px;
 }
 
+.welcome-container p {
+  font-size: 1rem; /* Increase font size */
+}
+
 #points-summary {
   display: flex;
   align-items: center;
@@ -329,4 +337,34 @@ details summary {
   color: green;
   font-weight: bold;
   margin: 5px 0;
+}
+
+.bottom-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-container label {
+  margin-right: 0rem;
+}
+
+.next-button {
+  align-self: flex-end;
+}
+
+.open-calendar {
+  margin: 0.5rem 0;
+  padding: 0.5rem 1rem;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }

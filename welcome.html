@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to ProcrastiNate!</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="welcome-container">
+    <h1>Welcome to </h1>
+    <div class="title-container">
+        <h1><span class="italic-half">Procrasti</span>&#8202;<span class="nate">NATE!</span></h1>
+    
+        <img src="./icons/icon192.png" alt="Mascot" class="mascot-icon">
+      </div>
+    <p>Meet your new friend Nate! Keep Nate happy by staying on top of your assignments:</p>
+    <ul>
+      <li><strong>Early Submission:</strong> +10 points per day early <br><small>    Max 50</small></li>
+      <li><strong>On-Time Submission:</strong> +5 points</li>
+      <li><strong>Late Submission:</strong> -40 points</li>
+      <li><strong>Missed Assignment:</strong> -50 points</li>
+    </ul>
+    <p>To get started, follow these steps:</p>
+    <ol>
+      <li>Click the Canvas button below to go to your calendar.</li>
+      <button id="open-calendar" class="open-calendar">
+        <img src="./images/CanvasLogo.png" alt="Open Calendar">
+      </button>
+      <li>Scroll down until you see "Calendar Feed" and click it. Copy the URL.</li>
+      <li>Paste the URL in the input field on the next page.</li>
+    </ol>
+    <p>Remember, Nate's happiness depends on your performance. Let's keep Nate smiling!</p>
+    <div class="bottom-container">
+      <div class="checkbox-container">
+        <label for="dont-show-again">Don't show this again</label>
+        <input type="checkbox" id="dont-show-again">
+      </div>
+      <button id="next-button" class="next-button">Next</button>
+    </div>
+  </div>
+  <script src="welcome.js"></script>
+</body>
+</html>
