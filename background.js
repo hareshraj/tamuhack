@@ -4,8 +4,8 @@ class CredentialsManager {
     static async getCredentials() {
         // Use AWS credential providers or your preferred method
         return {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            accessKeyId: 'AKIAV5AJXWXYLD5DSGIR',
+            secretAccessKey: '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',
         };
     }
 
