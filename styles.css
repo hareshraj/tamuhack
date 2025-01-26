@@ -5,7 +5,7 @@ body {
   padding: 1rem;
   width: 300px;
   overflow-y: auto; /* Enable scrolling if content overflows */
-  background: linear-gradient(to bottom, white, #eb8228) fixed; /* Vertical gradient background, fixed */
+  background: linear-gradient(to bottom, #f7f4ea, #eb8228) fixed; /* Vertical gradient background, fixed */
   background-color: #eb8228; /* Background color below the gradient */
 }
 
@@ -115,8 +115,8 @@ details summary {
 }
 
 .view-on-canvas img {
-  width: 32px;
-  height: 32px;
+  width: 32px; /* Match size with open calendar button */
+  height: 32px; /* Match size with open calendar button */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -218,8 +218,8 @@ details summary {
 }
 
 .view-on-canvas img {
-  width: 64px;
-  height: 64px;
+  width: 32px; /* Match size with open calendar button */
+  height: 32px; /* Match size with open calendar button */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -266,6 +266,7 @@ details summary {
   padding: 10px;
   border-radius: 8px;
   margin-bottom: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add drop shadow */
 }
 
 #points-summary h2 {

@@ -47,15 +47,16 @@ async function fetchICalData(url) {
 document.getElementById("save-url").addEventListener("click", async () => {
   const icalUrl = document.getElementById("ical-url").value;
   if (icalUrl) {
-      chrome.storage.local.set({ icalUrl }, async () => {
-          alert("iCal URL saved!");
-          document.getElementById("ical-url").style.display = "none";
-          document.getElementById("save-url").style.display = "none";
-          document.querySelector("label[for='ical-url']").style.display = "none";
-          await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
-      });
+    const saveTime = new Date().getTime();
+    chrome.storage.local.set({ icalUrl, saveTime }, async () => {
+      alert("iCal URL saved!");
+      document.getElementById("ical-url").style.display = "none";
+      document.getElementById("save-url").style.display = "none";
+      document.querySelector("label[for='ical-url']").style.display = "none";
+      await fetchAndDisplayAssignments(icalUrl); // Automatically fetch assignments after saving URL
+    });
   } else {
-      alert("Please enter a valid iCal URL.");
+    alert("Please enter a valid iCal URL.");
   }
 });
 
@@ -109,10 +110,21 @@ const upcomingAssignments = assignments.filter(a => a.dueDate.getTime() >= start
     return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned"], (data) => {
+chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned", "pastDueDeducted", "saveTime"], (data) => {
         const completedAssignments = data.completedAssignments || [];
-        const totalPoints = data.totalPoints || 0;
+        let totalPoints = data.totalPoints || 0;
         const pointsEarnedData = data.pointsEarned || {};
+        const pastDueDeducted = data.pastDueDeducted || [];
+        const saveTime = data.saveTime || 0;
+
+        // Deduct points for past due assignments if not already deducted and due after the iCal URL was saved
+        pastDueAssignments.forEach(a => {
+            if (!completedAssignments.includes(a.id) && !pastDueDeducted.includes(a.id) && a.dueDate.getTime() > saveTime) {
+                totalPoints -= 50;
+                pointsEarnedData[a.id] = -50;
+                pastDueDeducted.push(a.id);
+            }
+        });
 
         // Safely update points display and reward icon
         if (pointsDisplay) {
@@ -131,7 +143,7 @@ chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned"]
                     ${dueTodayAssignments.map(a => `
                         <li>
                             <div class="assignment-header">
-                                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
                                 <a href="${a.link}" target="_blank" class="view-on-canvas">
                                     <img src="./images/CanvasLogo.svg" alt="View on Canvas">
                                 </a>
@@ -175,7 +187,7 @@ ${upcomingAssignments.filter(a => a.course === course).map(a => `
           ${pastDueAssignments.map(a => `
             <li>
               <div class="assignment-header">
-                <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
                 <a href="${a.link}" target="_blank" class="view-on-canvas">
                   <img src="./images/CanvasLogo.svg" alt="View on Canvas">
                 </a>
@@ -184,7 +196,7 @@ ${upcomingAssignments.filter(a => a.course === course).map(a => `
                             ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
                             <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
                             <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
-                            <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
+                            <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Late"}</button>
                         </li>
                     `).join('')}
                 </ul>
@@ -196,10 +208,11 @@ ${upcomingAssignments.filter(a => a.course === course).map(a => `
                 const id = event.target.getAttribute("data-id");
                 const dueDate = new Date(parseInt(event.target.getAttribute("data-due")));
                 
-                chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned"], (data) => {
+                chrome.storage.local.get(["completedAssignments", "totalPoints", "pointsEarned", "pastDueDeducted"], (data) => {
                     const completedAssignments = data.completedAssignments || [];
                     let totalPoints = data.totalPoints || 0;
                     const pointsEarnedData = data.pointsEarned || {};
+                    const pastDueDeducted = data.pastDueDeducted || [];
 
                     if (completedAssignments.includes(id)) {
                         // Unmark assignment as completed
@@ -233,9 +246,16 @@ event.target.previousElementSibling.previousElementSibling.textContent = "Status
                             updateMilestones(totalPoints);
                         });
                     } else {
-                        // Mark assignment as completed
+                        // Mark assignment as completed or late
                         const now = new Date();
-                        const pointsEarned = calculatePoints(dueDate, now);
+                        let pointsEarned;
+                        if (dueDate < now) {
+                            pointsEarned = 10; // Points for marking as late
+                            event.target.textContent = "Unmark as Late";
+                        } else {
+                            pointsEarned = calculatePoints(dueDate, now);
+                            event.target.textContent = "Unmark as Completed";
+                        }
                         totalPoints += pointsEarned;
                         completedAssignments.push(id);
                         pointsEarnedData[id] = pointsEarned;
@@ -249,7 +269,6 @@ event.target.previousElementSibling.previousElementSibling.textContent = "Status
                             // Update UI
                             event.target.previousElementSibling.previousElementSibling.textContent = "Status: Completed";
                             event.target.previousElementSibling.textContent = `+${pointsEarned} points`;
-                            event.target.textContent = "Unmark as Completed";
                             
                             // Update total points and reward icon
                             document.getElementById('points-summary').innerHTML = `
@@ -264,6 +283,9 @@ event.target.previousElementSibling.previousElementSibling.textContent = "Status
                 });
             });
         });
+
+        // Save updated points and assignments
+        chrome.storage.local.set({ totalPoints, completedAssignments, pointsEarned: pointsEarnedData, pastDueDeducted });
     });
 
     chrome.storage.local.set({ assignments, lastFetch: Date.now() });
@@ -417,7 +439,7 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
                         ${pastDueAssignments.map(a => `
                             <li>
                                 <div class="assignment-header">
-                                    <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
+                                    <h3>${a.course}, ${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
 <a href="${a.link}" target="_blank" class="view-on-canvas">
                       <img src="./images/CanvasLogo.svg" alt="View on Canvas">
                     </a>
@@ -425,7 +447,8 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
 <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
                                 ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
                                 <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                                <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Completed"}</button>
+                                <div class="points-earned">${pointsEarnedData[a.id] ? `+${pointsEarnedData[a.id]} points` : ''}</div>
+                                <button class="toggle-completed" data-id="${a.id}" data-due="${a.dueDate.getTime()}">${completedAssignments.includes(a.id) ? "Unmark as Completed" : "Mark as Late"}</button>
                             </li>
                         `).join('')}
                     </ul>
