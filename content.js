@@ -1,6 +1,6 @@
 function scrapeAssignments() {
     const assignments = [];
-    const assignmentItems = document.querySelectorAll(".agenda-event__item");
+    const assignmentItems = document.querySelectorAll(".fc-event");
 
     assignmentItems.forEach((item) => {
         const titleElement = item.querySelector(".agenda-event__title");
@@ -36,3 +36,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 });
+
+// Ensure the script runs on the specified URL
+if (window.location.href.includes("canvas.tamu.edu/calendar#view_name=agenda")) {
+    scrapeAssignments();
+}

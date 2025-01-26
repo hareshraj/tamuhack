@@ -1,56 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProcrastiNator</title>
-  <link rel="stylesheet" href="styles.css"> <!-- Add this line to link styles.css -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"> <!-- Add this line to link Montserrat font -->
-  <style>
-    body { 
-      font-family: 'Montserrat', sans-serif; 
-      padding: 1rem; 
-    } /* Update font-family */
-    button { 
-      margin-top: 1rem; 
-      padding: 0.5rem 1rem; 
-      background-color: #4CAF50; 
-      color: white; 
-      border: none; 
-      border-radius: 5px; 
-      cursor: pointer; 
-    }
-    ul { 
-      list-style-type: none; 
-      padding: 0; 
-    }
-    li { 
-      margin-bottom: 1rem; 
-      padding: 0.5rem; 
-      border: 1px solid #ddd; 
-      border-radius: 5px; 
-      background-color: #f9f9f9; 
-    }
-    h3 { 
-      margin: 0; 
-    }
-    .due { 
-      font-size: 0.9rem; 
-      color: #666; 
-    }
-    #open-calendar { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; }
-    #open-calendar img { width: 32px; height: 32px; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <button id="open-calendar">
     <img src="./images/CanvasLogo.png" alt="Open Calendar">
   </button>
+  <button id="fetch">Refresh ⟳</button>
   <h1>ProcrastiNator</h1>
-  <p>Stay on top of your Canvas assignments!</p>
-  <button id="fetch">Check Assignments</button>
+  <label for="ical-url">Enter your iCal URL:</label>
+  <input type="text" id="ical-url" placeholder="Paste your iCal URL here">
+  <button id="save-url">Save URL</button>
   <ul id="assignment-list"></ul>
-
+  <script src="libs/ical.min.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
