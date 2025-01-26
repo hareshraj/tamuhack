@@ -5,11 +5,14 @@ body {
   padding: 1rem;
   width: 300px;
   overflow-y: auto; /* Enable scrolling if content overflows */
+  background: linear-gradient(to bottom, white, #eb8228) fixed; /* Vertical gradient background, fixed */
+  background-color: #eb8228; /* Background color below the gradient */
 }
 
 h1 {
   font-size: 1.5rem;
   text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
 }
 
 label {
@@ -71,11 +74,25 @@ li {
 }
 
 #fetch {
-  background-color: white;
+  background-color: transparent;
   color: black;
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#open-settings {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+#open-settings img {
+  width: 22px; /* Smaller image size */
+  height: 22px; /* Smaller image size */
+  padding: 6px;
+  border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -123,4 +140,61 @@ details summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.nate {
+  font-family: 'Bangers', cursive;
+  color: #eb8228;
+  font-size: 2rem; /* Increase font size */
+}
+
+#back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  position: absolute;
+  top: 1.3rem;
+  right: 1rem;
+  color: black;
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Drop shadow */
+  padding: 0.3rem, 0.5rem; /* Smaller hit box */
+}
+
+.right-buttons {
+  display: flex;
+  gap: 0.5rem; /* Space between buttons */
+}
+
+.editable-title {
+  cursor: pointer;
+}
+
+.editable-title[contenteditable="true"] {
+  border: 1px dashed #ddd;
+  padding: 0.2rem;
+}
+
+.context-menu {
+  position: absolute;
+  z-index: 1000;
+  display: none;
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.context-menu__item {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.context-menu__item:hover {
+  background-color: #f0f0f0;
+}
+
+.italic-half {
+  font-style: italic;
 }

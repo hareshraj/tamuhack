@@ -27,7 +27,7 @@ async function fetchICalData(url) {
               description: vevent.description || "No Description",
               link: vevent.component.getFirstPropertyValue("url") || "No Link",
               course: course,
-              status: status
+              status: status === "COMPLETED" ? "Submitted" : "Not Submitted"
           };
       });
 
@@ -68,6 +68,10 @@ document.getElementById("open-calendar").addEventListener("click", () => {
   chrome.tabs.create({ url: "https://canvas.tamu.edu/calendar#view_name=agenda" });
 });
 
+document.getElementById("open-settings").addEventListener("click", () => {
+  window.location.href = "settings.html";
+});
+
 async function fetchAndDisplayAssignments(icalUrl) {
   const assignmentList = document.getElementById("assignment-list");
   assignmentList.innerHTML = "Fetching assignments...";
@@ -96,12 +100,14 @@ async function fetchAndDisplayAssignments(icalUrl) {
               <li>
                 <div class="assignment-header">
                   <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                  <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                  <a href="${a.link}" target="_blank" class="view-on-canvas">
+                    <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                  </a>
                 </div>
                 <div class="due">Due: ${formatDate(a.dueDate)}</div>
                 ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
+                <div class="status">Status: ${completedAssignments.includes(a.id) ? "Submitted" : "Not Submitted"}</div>
+                <button class="mark-completed" data-id="${a.id}">${completedAssignments.includes(a.id) ? "Mark as Not Submitted" : "Mark as Submitted"}</button>
               </li>
             `).join('')}
           </ul>
@@ -114,12 +120,14 @@ async function fetchAndDisplayAssignments(icalUrl) {
             <li>
               <div class="assignment-header">
                 <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                <a href="${a.link}" target="_blank" class="view-on-canvas">
+                  <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                </a>
               </div>
               <div class="due">Due: ${formatDate(a.dueDate)}</div>
               ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-              <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-              <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
+              <div class="status">Status: ${completedAssignments.includes(a.id) ? "Submitted" : "Not Submitted"}</div>
+              <button class="mark-completed" data-id="${a.id}">${completedAssignments.includes(a.id) ? "Mark as Not Submitted" : "Mark as Submitted"}</button>
             </li>
           `).join('')}
         </ul>
@@ -130,13 +138,17 @@ async function fetchAndDisplayAssignments(icalUrl) {
       button.addEventListener("click", (event) => {
         const id = event.target.getAttribute("data-id");
         chrome.storage.local.get("completedAssignments", (data) => {
-          const completedAssignments = data.completedAssignments || [];
-          if (!completedAssignments.includes(id)) {
+          let completedAssignments = data.completedAssignments || [];
+          if (completedAssignments.includes(id)) {
+            completedAssignments = completedAssignments.filter(aid => aid !== id);
+            event.target.textContent = "Mark as Submitted";
+            event.target.previousElementSibling.textContent = "Status: Not Submitted";
+          } else {
             completedAssignments.push(id);
-            chrome.storage.local.set({ completedAssignments }, () => {
-              event.target.previousElementSibling.textContent = "Status: Completed";
-            });
+            event.target.textContent = "Mark as Not Submitted";
+            event.target.previousElementSibling.textContent = "Status: Submitted";
           }
+          chrome.storage.local.set({ completedAssignments });
         });
       });
     });
@@ -182,12 +194,14 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
                   <li>
                     <div class="assignment-header">
                       <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                      <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                      <a href="${a.link}" target="_blank" class="view-on-canvas">
+                        <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                      </a>
                     </div>
                     <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
                     ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                    <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                    <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
+                    <div class="status">Status: ${completedAssignments.includes(a.id) ? "Submitted" : "Not Submitted"}</div>
+                    <button class="mark-completed" data-id="${a.id}">${completedAssignments.includes(a.id) ? "Mark as Not Submitted" : "Mark as Submitted"}</button>
                   </li>
                 `).join('')}
               </ul>
@@ -200,12 +214,14 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
                 <li>
                   <div class="assignment-header">
                     <h3>${a.title.replace(/\[.*?\]/g, '').trim()}</h3>
-                    <a href="${a.link}" target="_blank" class="view-on-canvas">View on Canvas</a>
+                    <a href="${a.link}" target="_blank" class="view-on-canvas">
+                      <img src="./images/CanvasLogo.svg" alt="View on Canvas">
+                    </a>
                   </div>
                   <div class="due">Due: ${formatDate(new Date(a.dueDate))}</div>
                   ${a.description !== "No Description" ? `<div class="desc">${a.description}</div>` : ""}
-                  <div class="status">Status: ${completedAssignments.includes(a.id) ? "Completed" : a.status}</div>
-                  <button class="mark-completed" data-id="${a.id}">Mark as Completed</button>
+                  <div class="status">Status: ${completedAssignments.includes(a.id) ? "Submitted" : a.status}</div>
+                  <button class="mark-completed" data-id="${a.id}">${completedAssignments.includes(a.id) ? "Mark as Not Submitted" : "Mark as Submitted"}</button>
                 </li>
               `).join('')}
             </ul>
@@ -216,13 +232,17 @@ chrome.storage.local.get(["assignments", "lastFetch", "icalUrl"], async (data) =
           button.addEventListener("click", (event) => {
             const id = event.target.getAttribute("data-id");
             chrome.storage.local.get("completedAssignments", (data) => {
-              const completedAssignments = data.completedAssignments || [];
-              if (!completedAssignments.includes(id)) {
+              let completedAssignments = data.completedAssignments || [];
+              if (completedAssignments.includes(id)) {
+                completedAssignments = completedAssignments.filter(aid => aid !== id);
+                event.target.textContent = "Mark as Submitted";
+                event.target.previousElementSibling.textContent = "Status: Not Submitted";
+              } else {
                 completedAssignments.push(id);
-                chrome.storage.local.set({ completedAssignments }, () => {
-                  event.target.previousElementSibling.textContent = "Status: Completed";
-                });
+                event.target.textContent = "Mark as Not Submitted";
+                event.target.previousElementSibling.textContent = "Status: Submitted";
               }
+              chrome.storage.local.set({ completedAssignments });
             });
           });
         });
@@ -242,5 +262,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data.icalUrl) {
       await fetchAndDisplayAssignments(data.icalUrl);
     }
+  });
+
+  document.querySelectorAll("details summary").forEach(summary => {
+    summary.classList.add("editable-title");
+    summary.addEventListener("dblclick", (event) => {
+      const target = event.target;
+      target.setAttribute("contenteditable", "true");
+      target.focus();
+    });
+
+    summary.addEventListener("blur", (event) => {
+      const target = event.target;
+      target.removeAttribute("contenteditable");
+      // Optionally, save the new title to storage or handle it as needed
+    });
+  });
+
+  const contextMenu = document.createElement("div");
+  contextMenu.classList.add("context-menu");
+  contextMenu.innerHTML = '<div class="context-menu__item">Rename</div>';
+  document.body.appendChild(contextMenu);
+
+  document.querySelectorAll("details summary").forEach(summary => {
+    summary.classList.add("editable-title");
+
+    summary.addEventListener("dblclick", (event) => {
+      const target = event.target;
+      target.setAttribute("contenteditable", "true");
+      target.focus();
+    });
+
+    summary.addEventListener("blur", (event) => {
+      const target = event.target;
+      target.removeAttribute("contenteditable");
+      // Optionally, save the new title to storage or handle it as needed
+    });
+
+    summary.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      contextMenu.style.top = `${event.clientY}px`;
+      contextMenu.style.left = `${event.clientX}px`;
+      contextMenu.style.display = "block";
+      contextMenu.targetElement = event.target;
+    });
+  });
+
+  document.addEventListener("click", () => {
+    contextMenu.style.display = "none";
+  });
+
+  contextMenu.querySelector(".context-menu__item").addEventListener("click", () => {
+    const target = contextMenu.targetElement;
+    if (target) {
+      target.setAttribute("contenteditable", "true");
+      target.focus();
+    }
+    contextMenu.style.display = "none";
   });
 });
