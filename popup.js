@@ -17,8 +17,8 @@ async function fetchICalData(url) {
       const assignments = events.map(event => {
           const vevent = new ICAL.Event(event);
           const summary = vevent.summary || "No Title";
-          const classMatch = summary.match(/\[(.{8})/);
-          const course = classMatch ? classMatch[1] : "Unknown Course";
+          const classMatch = summary.match(/\[([A-Za-z]+)(?:[-\s]?(\d{3}))?/);
+          const course = classMatch ? `${classMatch[1]} ${classMatch[2] || ""}`.trim() : "Unknown Course";
           return {
               title: summary,
               dueDate: vevent.startDate.toJSDate(),

@@ -34,6 +34,10 @@ button {
   cursor: pointer;
 }
 
+button, input, label, h1, details summary, .view-on-canvas {
+  font-family: 'Montserrat', Arial, sans-serif; /* Apply Montserrat font */
+}
+
 ul {
   list-style-type: none;
   padding: 0;
