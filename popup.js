@@ -68,14 +68,14 @@ document.getElementById("open-calendar").addEventListener("click", () => {
     chrome.tabs.create({ url: "https://canvas.tamu.edu/calendar#view_name=agenda" });
 });
 
-document.getElementById("reset-points").addEventListener("click", () => {
-    chrome.storage.local.set({ totalPoints: 0, completedAssignments: [], pointsEarned: {} }, () => {
-        alert("Points reset to 0!");
-        document.getElementById("points-total").textContent = "Total Points: 0";
-        document.getElementById("reward-icon").src = getRewardIcon(0);
-        fetchAndDisplayAssignments(document.getElementById("ical-url").value);
+async function getAssignments() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(["assignments"], (data) => {
+            resolve(data.assignments || []);
+        });
     });
-});
+}
+  
 
 async function fetchAndDisplayAssignments(icalUrl) {
     const assignmentList = document.getElementById("assignment-list");
@@ -84,7 +84,9 @@ async function fetchAndDisplayAssignments(icalUrl) {
     
     // Add null checks for critical elements
     if (!assignmentList || !pointsDisplay || !rewardIconDisplay) {
-        console.error("Critical DOM elements are missing!");
+        if (!assignmentList) console.error("Assignment list element is missing.");
+        if (!pointsDisplay) console.error("Points display element is missing.");
+        if (!rewardIconDisplay) console.error("Reward icon display element is missing.");
         return; // Exit the function if critical elements are not found
     }
     
@@ -95,6 +97,19 @@ async function fetchAndDisplayAssignments(icalUrl) {
 
     const pastDueAssignments = assignments.filter(a => a.dueDate < now);
     const upcomingAssignments = assignments.filter(a => a.dueDate >= now);
+    chrome.runtime.sendMessage(
+        { action: "sendAssignments", assignments: assignments },
+        (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Error sending assignments to background.js:", chrome.runtime.lastError.message);
+            } else if (response && response.success) {
+                console.log("Assignments sent successfully to background.js.");
+            } else {
+                console.error("Failed to send assignments.");
+            }
+        }
+    );
+
 
     const courses = [...new Set(upcomingAssignments.map(a => a.course))];
 
@@ -300,12 +315,54 @@ chrome.storage.local.get("icalUrl", (data) => {
 
 // Auto-refresh assignments when the extension is opened
 document.addEventListener("DOMContentLoaded", async () => {
-    chrome.storage.local.get("icalUrl", async (data) => {
-        if (data.icalUrl) {
-            await fetchAndDisplayAssignments(data.icalUrl);
+    const assignments = await getAssignments(); // Function to fetch assignments
+  
+    const comprehendClient = await CredentialsManager.initializeAwsConfig();
+    const analyzer = new AssignmentUrgencyAnalyzer(comprehendClient);
+  
+    const analyzedAssignments = await Promise.all(
+      assignments.map(async (assignment) => {
+        const analysis = await analyzer.analyzeAssignmentUrgency(assignment);
+        return {
+          ...assignment,
+          summary: analysis?.truncatedDescription || "No summary available",
+          urgency: analysis?.urgencyScore || 0,
+          sentiment: analysis?.sentimentSummary || "Unknown",
+        };
+      })
+    );
+  
+    const container = document.getElementById("assignments");
+  
+    analyzedAssignments.forEach((a) => {
+      const assignmentDiv = document.createElement("div");
+      assignmentDiv.className = "assignment";
+  
+      const urgencyClass =
+        a.urgency > 0.8
+          ? "high-urgency"
+          : a.urgency > 0.5
+          ? "medium-urgency"
+          : "low-urgency";
+  
+      assignmentDiv.innerHTML = `
+        <div class="title">${a.title}</div>
+        <div class="urgency ${urgencyClass}">Urgency: ${(a.urgency * 100).toFixed(
+        1
+      )}%</div>
+        <div class="sentiment">Sentiment: ${a.sentiment}</div>
+        ${
+          a.summary !== "No summary available"
+            ? `<div class="desc">${a.summary}</div>`
+            : ""
         }
+        <div class="due-date">Due: ${new Date(a.dueDate).toLocaleString()}</div>
+      `;
+  
+      container.appendChild(assignmentDiv);
     });
-});
+  });
+  
 
 document.getElementById("save-url").addEventListener("click", async () => {
     const icalUrl = document.getElementById("ical-url").value;

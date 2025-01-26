@@ -124,6 +124,7 @@ details summary {
   justify-content: center; /* Center the title and icon together */
   align-items: center; /* Vertically align the icon with the text */
   gap: 2px; /* Space between the title and the icon */
+  margin-top: 3rem; /* Add some space above the title section */
   margin-bottom: 1rem; /* Add some space below the title section */
 }
 
