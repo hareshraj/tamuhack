@@ -198,3 +198,105 @@ details summary {
 .italic-half {
   font-style: italic;
 }
+
+details {
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Drop shadow */
+  margin-bottom: 1rem; /* Space between sections */
+  padding: 0.5rem; /* Padding inside the details */
+  background-color: #fff; /* Background color */
+}
+
+details summary {
+  font-size: 1.25rem; /* Increase font size */
+}
+
+.view-on-canvas {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.view-on-canvas img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mark-completed {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #e80031; /* Red color */
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Drop shadow */
+  cursor: pointer;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: bold; /* Bold font */
+  margin-left: 0.5rem; /* Space between buttons */
+}
+
+.assignment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-container {
+  display: flex;
+  justify-content: center; /* Center the title and icon together */
+  align-items: center; /* Vertically align the icon with the text */
+  gap: 2px; /* Space between the title and the icon */
+  margin-bottom: 1rem; /* Add some space below the title section */
+}
+
+.mascot-icon {
+  width: 60px; /* Adjust size of the mascot icon */
+  height: 60px;
+}
+
+#points-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+#points-summary h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+#reward-icon {
+  width: 64px;
+  height: 64px;
+}
+
+#milestones ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#milestones li {
+  padding: 5px;
+  margin: 5px 0;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+#milestones li.completed {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.points-earned {
+  color: green;
+  font-weight: bold;
+  margin: 5px 0;
+}
